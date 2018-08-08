@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width =device-width, initial-scale = 1.0, maximum-scale = 1.0, user-scalable = 0" />
+  <title>AI语音识别看电影</title>
+</head>
+<style>
+  *{
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-decoration: none
+  }
+  html, body{
+    width: 100%;
+    height: 100%;
+  }
+  .cover{
+    width: 100% ;
+    text-align: center;
+  }
+  #btn{
+    border: 1px solid #00b600;
+    padding: .4rem;
+    border-radius: 5px;
+    margin-top: 1.5rem;
+    background: #fff;
+    color: #00b600;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+  .list{
+    box-sizing: border-box;
+    padding: 1rem .5rem;
+    width: 100%;
+    overflow: hidden;
+  }
+  .list>.item {
+    width: 33.3333%;
+    height: 10rem;
+    box-sizing: border-box;
+    padding: .5rem .2rem;
+    float: left;
+  }
+
+  .list>.item>a{
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .list>.item>a>.cover{
+    width: 100%;
+    height: 7rem;
+  }
+  .list>.item>a>.cover>img{
+    display: block;
+    width: 100%;
+    height: 6.5rem;
+  }
+  .list>.item>a>.info>h3{
+    text-align: center;
+    font-size: .6rem;
+    color: #494949;
+  }
+  .list>.item>a>.info>.rank{
+    text-align: center;
+    font-size: .6rem;
+    color: #9b9b9b;
+  }
+  .page{
+    box-sizing: border-box;
+    padding: 1rem .5rem;
+    width: 100%;
+  }
+   .page>.info{
+    width: 100%;
+    height: 7.6rem;
+  }
+   .page>.info>.right{
+    float: right;
+    width: 35%;
+  }
+   .page>.info>.right>a{
+    display: block;
+    width: 100%;
+  }
+   .page>.info>.right>a>img{
+    display: block;
+    width: 100%;
+    height: 7.6rem
+  }
+   .page>.info>.left{
+    float: left;
+    width: 56%;
+  }
+   .page>.info>.left>p{
+    font-size: .7rem;
+    color: #494949;
+  }
+   .page>.info>.left>.rating{
+    margin: .2rem 0 .8rem 0;
+  }
+   .page>.info>.left>.meta{
+    font-size: .6rem;
+    line-height: 1.1rem;
+  }
+   .page>.info>.left>.rating>span{
+    color: lightgreen;
+    margin: .2rem 0 .8rem 0;
+  }
+   .page>.info>.left>.rating>.ratingNum{
+    margin-left: .5rem;
+    color: #aaa;
+  }
+</style>
+<body>
+  <div class="cover">
+    <button id="btn">点击开始录音</button>
+  </div>
+  <ul class="list">
+  </ul>
+  <!--JS-SDK-->
+  <script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+  <!--引入zepto，jQuery怎么样他就怎么用-->
+  <script src="https://cdn.bootcss.com/zepto/1.0rc1/zepto.min.js"></script>
+  <script type="text/javascript" src="./js/rem.js"></script>
+  <script type="text/javascript">
+    /*
+      步骤一：绑定域名   测试号管理页面填写--去掉http://...
+      步骤二：引入JS文件在需要调用JS接口的页面引入如下JS文件,因为引入了js文件所以，有wx这个对象
+      步骤三：通过config接口注入权限验证配置 wx.config
+     */
+    $(function () {
+      wx.config({
+        debug: false, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
+        appId: 'wxc44d5b04be606dff', // 必填，公众号的唯一标识。自己的APPID
+        timestamp: '<%= timestamp %>', // 必填，生成签名的时间戳（注意小写）
+        nonceStr: '<%= noncestr %>', // 必填，生成签名的随机串
+        signature: '<%= signature %>',// 必填，签名
+        jsApiList: [
+          'onMenuShareQQ',
+          'onMenuShareQZone',
+          'startRecord',
+          'stopRecord',
+          'translateVoice'
+        ] // 必填，需要使用的JS接口列表
+      });
+
+      //定义标志位,默认就是无录音的
+      var isRecord = false;
+
+      //tap事件
+      $('#btn').tap(function () {
+        if (!isRecord) {
+          //开始录音
+          wx.startRecord();
+          //修改标志位的状态
+          isRecord = true;
+        } else {
+          //结束录音
+          wx.stopRecord({
+            success: function (res) {
+              var localId = res.localId;  //自动捕获到ID
+
+              //识别语音在文档wx
+              wx.translateVoice({
+                localId: localId, // 需要识别的音频的本地Id，由录音相关接口获得
+                isShowProgressTips: 1, // 默认为1，显示进度提示
+                success: function (res) {
+
+                  //根据上面的res.translateResult返回一个语音识别后电影结果\
+                  /*一定要在后面加上 callback=？跨域问题?? 固定格式--去豆瓣的api2去官网搜URL*/
+                  var url = 'https://api.douban.com/v2/movie/search?q=' + res.translateResult + '&callback=?'
+                  $.getJSON(url, function (data) {
+                    var subjects = data.subjects;
+                    let html = '';
+                    subjects.forEach(function (item) {
+                      html += ' <li class="item">' +
+                        '      <a href=" '+ item.alt +' ">' +
+                        '        <div class="cover">' +
+                        '          <img src="'+ item.images.small +'" alt="'+ item.title +'" data-x="2000" data-y="2963" class="img-show" style="width: 100%;">' +
+                        '        </div>\n' +
+                        '        <div class="info">' +
+                        '          <h3>'+ item.title +'</h3>' +
+                        '          <p class="rank">' +
+                        '            <span>评分:</span>' +
+                        '            <span class="rating">'+ item.rating.average +'</span>' +
+                        '          </p>' +
+                        '        </div>' +
+                        '      </a>' +
+                        '    </li>';
+                    });
+                    $('.list').html(html);
+
+                    //分享到QQ--没有设置就是分享一个单独的连接出去。
+                    wx.onMenuShareQQ({
+                      title: subjects[0].title, // 分享标题
+                      desc: '评分：' + subjects[0].rating.average, // 分享描述
+                      link: subjects[0].alt, // 分享链接
+                      imgUrl: subjects[0].images.small, // 分享图标
+                      success: function () {
+                        // 用户确认分享后执行的回调函数
+                        alert('分享成功了~');
+                      },
+                      cancel: function () {
+                        // 用户取消分享后执行的回调函数
+                        alert('取消分享了~');
+                      }
+                    });
+
+                    //分享到QQ空间
+                    wx.onMenuShareQZone({
+                      title: subjects[0].title, // 分享标题
+                      desc: '评分：' + subjects[0].rating.average, // 分享描述
+                      link: subjects[0].alt,    // 分享链接
+                      imgUrl: subjects[0].images.small,   // 分享图标
+                      success: function () {
+                        // 用户确认分享后执行的回调函数
+                        alert('分享成功了~');
+                      },
+                      cancel: function () {
+                        // 用户取消分享后执行的回调函数
+                        alert('取消分享了~');
+                      }
+                    });
+
+
+
+                  })
+                  //修改标志位的状态
+                  isRecord = false;
+                }
+              });
+            }
+          });
+        }
+
+      })
+
+    })
+  </script>
+
+</body>
+</html>

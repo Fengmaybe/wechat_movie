@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width =device-width, initial-scale = 1.0, maximum-scale = 1.0, user-scalable = 0" />
+  <title>影院预告片</title>
+  <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <link href="https://cdn.bootcss.com/dplayer/1.22.2/DPlayer.min.css" rel="stylesheet">
+  <style>
+    .navbar {
+      margin: 0 -15px;
+    }
+    .navbar .btn {
+      color: #fff;
+      background-color: transparent;
+      background-image: none;
+      border-color: #fff;
+    }
+    .card-header .btn{
+      text-decoration: none;
+      color: #666;
+      padding: 0;
+    }
+
+    .list-group-item{
+      padding-left: 0;
+      padding-right: 0;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <!--navbar组件-->
+  <nav class="navbar navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">硅谷影院预告片</a>
+    <form class="form-inline my-2 my-lg-0" action="/search">
+      <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+    </form>
+  </nav>
+  <!--card组件-->
+  <div class="row">
+    <div class="card-group">
+      <% for (var i = 0; i < movies.length; i++) { %>
+
+      <div class="card">
+        <!--现在这些数据就是要访问我们的七牛里面的数据了，我们可以拿到Trailers的一些数据，就可以动态的根据其字段值来拼接成七牛的外链地址-->
+        <!--http://pb818xdqg.bkt.clouddn.com/39HiwM726Z7I9sVn5LVJZ.jpg-->
+        <img class="card-img-top" src="http://pb818xdqg.bkt.clouddn.com/<%= movies[i].posterKey %>"
+             data-video="http://pb818xdqg.bkt.clouddn.com/<%= movies[i].videoKey %>"
+             data-cover="http://pb818xdqg.bkt.clouddn.com/<%= movies[i].coverKey %>"
+             data-id="<%= movies[i].doubanId %>"
+             alt="Card image cap">
+        <div class="card-body">
+          <h5 class="card-title"><%= movies[i].title %></h5>
+          <p class="card-text">&nbsp;&nbsp;&nbsp;&nbsp;<%= movies[i].summary %></p>
+        </div>
+
+        <div id="accordion<%= i %>">
+          <div class="card">
+            <div class="card-header" id="heading<%= i %>">
+              <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapse<%= i %>" aria-expanded="true" aria-controls="collapse<%= i %>">
+                  电影详情
+                </button>
+              </h5>
+            </div>
+
+            <div id="collapse<%= i %>" class="collapse" aria-labelledby="heading<%= i %>" data-parent="#accordion<%= i %>">
+              <div class="card-body">
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item">导演：
+                    <% for (let j = 0; j < movies[i].directors.length; j++) {
+                    if(j === movies[i].directors.length-1){  %>
+                      <%= movies[i].directors[j] %>
+                      <%  } else { %>
+                      <%= movies[i].directors[j] %> |
+                      <% } %>
+                    <% } %>
+                  </li>
+                  <li class="list-group-item">主演：
+                    <% for (let j = 0; j < movies[i].casts.length; j++) {
+                    if(j === movies[i].casts.length-1){  %>
+                    <%= movies[i].casts[j] %>
+                    <%  } else { %>
+                    <%= movies[i].casts[j] %> |
+                    <% } %>
+                    <% } %>
+                  </li>
+                  <li class="list-group-item">类型：
+                    <% for (let j = 0; j < movies[i].genres.length; j++) {
+                    if(j === movies[i].genres.length-1){  %>
+                    <%= movies[i].genres[j] %>
+                    <%  } else { %>
+                    <%= movies[i].genres[j] %> |
+                    <% } %>
+                    <% } %>
+                  </li>
+                  <li class="list-group-item">上映时间：<%= movies[i].releaseDate %></li>
+                  <li class="list-group-item">评分：<%= movies[i].rating %></li>
+                  <li class="list-group-item">片长：<%= movies[i].runtime %></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <small class="text-muted">Updated 2 hours ago</small>
+        </div>
+      </div>
+
+      <% } %>
+
+    </div>
+  </div>
+</div>
+<!--模态框组件modal-->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content" id="dplayer"></div>
+  </div>
+</div>
+
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdn.bootcss.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script src="https://cdn.bootcss.com/dplayer/1.22.2/DPlayer.min.js"></script>
+<script type="text/javascript">
+  $(function () {
+    /*初始化dp*/
+    var dp = null;
+    //上一次视频点击信息的字符串
+    var lastVedio = '';
+    //为模态框绑定事件hidden.bs.modal  （当模式完成对用户的隐藏时，会触发此事件-等待CSS转换完成）
+    $('#myModal').on('hidden.bs.modal',function () {
+      //当用户点击到外面，模态框消失了那么就应该暂停播放器
+      dp.pause();
+    });
+
+    $('.card-img-top').click(function () {
+      //获取视频/封面图的地址
+      var video = $(this).data('video');
+      var cover = $(this).data('cover');
+      //获取哪个视频的弹幕--通过doubanId
+      var id = $(this).data('id');
+
+      if(!dp){
+        //如果之前没有播放器--则生成播放器，并重置更新vedio的值
+        lastVedio = video;
+        //生成一个最简单的播放器
+         dp = new DPlayer({
+          container: document.getElementById('dplayer'),  //存放播放器容器
+          video: {
+            url: video,           //播放的视频资源路径
+            pic: cover,           //视频的封面图
+            thumbnails: cover     //视频的缩略图
+          },
+          danmaku: {
+            /*指定是哪个视频，用ID去指定不同的视频素材*/
+            id: id,
+            /*注意' '*/
+            api: '<%= url %>/'
+          }
+        });
+      }else{
+        //之前有创建播放器，要切换一下视频资源
+        if(video !== lastVedio){
+          dp.switchVideo({
+            url: video,
+            pic: cover,
+            thumbnails: cover
+          }, {
+            id: id,
+            api: '<%= url %>/'
+          });
+          //同样更新lastVideo值，将切换视频资源最新的值付给lastVideo
+          lastVideo = video;
+        }
+      }
+      //不管之前有无dp，都要操作显示模态框
+      $('#myModal').modal('show')
+    })
+  })
+</script>
+</body>
+</html>
